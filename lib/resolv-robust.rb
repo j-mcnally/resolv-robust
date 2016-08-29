@@ -13,9 +13,13 @@ class Resolv
   mattr_accessor :attempts
   self.attempts = 3
 
+  mattr_accessor :bypass
+  self.bypass = []
+
   # Same as Resolv::getaddress only it uses ActiveSuport's caching and has a
   # retry mechanism built in.
   def self.get_address_robustly name
+    return getaddress(name) if self.bypass.include?(name)
     cache_store.fetch "resolv - #{name}", expires_in: cache_duration do
       attempts_remaining = attempts
       begin
