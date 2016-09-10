@@ -20,19 +20,32 @@ class Resolv
   # retry mechanism built in.
   def self.get_address_robustly name
     return getaddress(name) if self.bypass.include?(name)
-    cache_store.fetch "resolv - #{name}", expires_in: cache_duration do
-      attempts_remaining = attempts
-      begin
-        getaddress name
-      rescue Resolv::ResolvError
-        if attempts_remaining > 0
-          attempts_remaining -= 1
-          sleep (attempts - attempts_remaining) * 0.1
-          retry
+    without_robust do
+      cache_store.fetch "resolv - #{name}", expires_in: cache_duration do
+        attempts_remaining = attempts
+        begin
+          getaddress name
+        rescue Resolv::ResolvError
+          if attempts_remaining > 0
+            attempts_remaining -= 1
+            sleep (attempts - attempts_remaining) * 0.1
+            retry
+          end
+          raise
         end
-        raise
       end
     end
+  end
+
+  def self.without_robust
+    IPSocket.singleton_class.class_eval do
+      alias :getaddress :getaddressold
+    end
+    result = yield
+    IPSocket.singleton_class.class_eval do
+      alias :getaddress :getaddressnew
+    end
+    result
   end
 
 end

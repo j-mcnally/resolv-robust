@@ -13,12 +13,15 @@ require 'resolv-replace'
 # Now redefine IPSocket::getaddress to exactly what Ruby defines it as ubt
 # use `get_address_robustly` instead of `getaddress`. Injected as a prepended
 # module so the monkey-patch can be removed if desired at runtime.
-IPSocket.singleton_class.prepend Module.new {
-  def getaddress host
+IPSocket.singleton_class.class_eval do
+  def getaddressnew host
+    puts "TEST 123"
     begin
       return Resolv.get_address_robustly(host).to_s
     rescue Resolv::ResolvError
       raise SocketError, "Hostname not known: #{host}"
     end
   end
-}
+  alias :getaddressold :getaddress
+  alias :getaddress :getaddressnew
+end
