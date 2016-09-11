@@ -15,7 +15,6 @@ require 'resolv-replace'
 # module so the monkey-patch can be removed if desired at runtime.
 IPSocket.singleton_class.class_eval do
   def getaddressnew host
-    puts "TEST 123"
     begin
       return Resolv.get_address_robustly(host).to_s
     rescue Resolv::ResolvError
